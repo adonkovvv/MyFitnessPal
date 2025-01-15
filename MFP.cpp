@@ -16,10 +16,14 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <ctime>
 
 int input;
 std::string usersFilePath = "users.txt";
 std::string usersInfoFilePath = "usersInfo.txt";
+std::string mealInfoPath = "mealInfo.txt";
+std::time_t t = std::time(nullptr);
+std::tm* localTime = std::localtime(&t);
 
 struct Consumer {
     std::string typeAccount;
@@ -32,6 +36,7 @@ struct Consumer {
     int activityLevel;
     std::string goal;
     int dailyCalories;
+    int eatenCalories;
 
     Consumer (std::string typeAccount_val,
               std::string username_val,
@@ -40,7 +45,9 @@ struct Consumer {
               int height_val,
               int weight_val,
               int activityLevel_val,
-              std::string goal_val) {
+              std::string goal_val,
+              int dailyCalories_val = 0,
+              int eatenCalories_val = 0) {
         typeAccount = typeAccount_val;
         username = username_val;
         password = password_val;
@@ -50,8 +57,14 @@ struct Consumer {
         weight = weight_val;
         activityLevel = activityLevel_val;
         goal = goal_val;
+        eatenCalories = eatenCalories_val;
 
-        setDailyCalories();
+        if (dailyCalories_val == 0) {
+            setDailyCalories();
+        }
+        else {
+            dailyCalories = dailyCalories_val;
+        }
     }
 
     void setDailyCalories () {
@@ -89,17 +102,210 @@ struct Consumer {
 
 };
 
+std::string todaysDate ();
+int getNumberOfRowsWithMeals ();
+
+bool isThereRowForConsumerAndTypeForToday(Consumer consumer, std::string type) {
+    std::ifstream mealFile(mealInfoPath);
+    std::string line;
+
+    while (std::getline(mealFile, line)) {
+            if (line.find(consumer.username) != std::string::npos &&
+                line.find(type) != std::string::npos &&
+                line.find(todaysDate()) != std::string::npos) {
+                return true;
+            }
+    }
+
+    return false;
+}
+
+/**
+ * @brief Function for adding rows to mealInfo
+ *
+ * @param consumer
+ * @param type eatenCalories\burntCalories
+ *
+ */
+void addRowsToMealInfo (Consumer consumer, std::string type) {
+    std::ofstream mealInfo;
+
+    if (getNumberOfRowsWithMeals() == 0) {
+        mealInfo.open(mealInfoPath, std::ios::trunc);
+    }
+    else {
+        mealInfo.open(mealInfoPath, std::ios::app);
+    }
+
+    if (!isThereRowForConsumerAndTypeForToday(consumer, type)) {
+        mealInfo<<"{\"username\" : \"" + consumer.username + "\", \"type\" : \"" + type + "\", \"date\" : \"" + todaysDate() + "\",}";
+    }
+
+    mealInfo.close();
+}
+
+/**
+ * @brief Function for displaying meals and trainings info
+ *
+ * @param consumer
+ *
+ */
+void displayMealsAndTrainingsForToday (Consumer consumer) {
+    std::string lineFromFile, searchType = "eatenCalories";
+    std::ifstream mealInfo(mealInfoPath);
+
+    while (std::getline(mealInfo, lineFromFile)) {
+        if (lineFromFile.find(consumer.username) != std::string::npos &&
+            lineFromFile.find(todaysDate()) != std::string::npos &&
+            lineFromFile.find("eatenCalories") != std::string::npos) {
+            std::cout<<"The meals with their calories you have consumed for the day are:\n\n";
+            std::string mealsLine = lineFromFile.substr(lineFromFile.find(todaysDate()) + todaysDate().size() + 3, lineFromFile.size());
+
+            //"tutka" : "50", "sandvich" : "600", "d" : "4", "r" : "4", "mohito" : "120",}
+            for (int i = 0; i < mealsLine.size(); i++) {
+                if (mealsLine[i] == '"') {
+                    i++;
+                    std::string meal = "", calories = "";
+                    while (mealsLine[i] != '"') {
+                        meal += mealsLine[i];
+                        i++;
+                    }
+                    i += 5;
+                    while (mealsLine[i] != '"') {
+                        calories += mealsLine[i];
+                        i++;
+                    }
+                    i += 2;
+                    std::cout<<"\t"<<meal<<" - "<<calories<<" calories\n";
+                }
+            }
+            std::cout<<"\n";
+        }
+
+        if (lineFromFile.find(consumer.username) != std::string::npos &&
+            lineFromFile.find(todaysDate()) != std::string::npos &&
+            lineFromFile.find("burntCalories") != std::string::npos) {
+            std::cout<<"The trainings with their calories you have done for the day are:\n\n";
+            std::string mealsLine = lineFromFile.substr(lineFromFile.find(todaysDate()) + todaysDate().size() + 3, lineFromFile.size());
+
+            //"tutka" : "50", "sandvich" : "600", "d" : "4", "r" : "4", "mohito" : "120",}
+            for (int i = 0; i < mealsLine.size(); i++) {
+                if (mealsLine[i] == '"') {
+                    i++;
+                    std::string meal = "", calories = "";
+                    while (mealsLine[i] != '"') {
+                        meal += mealsLine[i];
+                        i++;
+                    }
+                    i += 5;
+                    while (mealsLine[i] != '"') {
+                        calories += mealsLine[i];
+                        i++;
+                    }
+                    i += 2;
+                    std::cout<<"\t"<<meal<<" - "<<calories<<" calories\n";
+                }
+            }
+            std::cout<<"\n";
+        }
+    }
+
+    mealInfo.close();
+}
+
+std::string todaysDate () {
+    return std::to_string(localTime->tm_mday) + "-" + std::to_string(localTime->tm_mon + 1) + "-" + std::to_string(localTime->tm_year + 1900);
+}
+
+/**
+ * @brief Function for getting count of consumers registered
+ *
+ * @return int Count of consumers
+ *
+ */
+int getNumberOfConsumers () {
+    std::ifstream usersFile(usersFilePath);
+    std::string line;
+    int countOfConsumers = 0;
+
+    while (std::getline(usersFile, line)) {
+            if (line.size() > 0) {
+                countOfConsumers++;
+            }
+    }
+
+    usersFile.close();
+
+    return countOfConsumers;
+}
+
+/**
+ * @brief Function for getting count of rows in mealsInfo.txt
+ *
+ * @return int Count of rows
+ *
+ */
+int getNumberOfRowsWithMeals () {
+    std::ifstream mealFile(mealInfoPath);
+    std::string line;
+    int countOfRows = 0;
+
+    while (std::getline(mealFile, line)) {
+            if (line.size() > 0) {
+                countOfRows++;
+            }
+    }
+
+    mealFile.close();
+
+    return countOfRows;
+}
+
 /**
  * @brief Function for getting value of field
  *
  * @param line Line with data (usersInfo.txt format)
- * @param fieldType the name of the fiels
+ * @param fieldType the name of the fields
  * @return string Value of field
  *
  */
 std::string getField (std::string line, std::string fieldType) {
     std::string fromTheFieldType = line.substr(line.find(fieldType) + fieldType.size() + 5);
     return fromTheFieldType.substr(0, fromTheFieldType.find_first_of("\""));
+}
+
+/**
+ * @brief Function for setting value of field
+ *
+ * @param line Line with data (usersInfo.txt format)
+ * @param fieldType the name of the fields
+ * @param newValue Data to be saved
+ *
+ */
+void setField (std::string line, std::string fieldType, std::string newValue) {
+    std::string value = getField(line, fieldType), lineFromFile, content = "";
+
+    std::ifstream usersInfoFile(usersInfoFilePath);
+
+
+    while (std::getline(usersInfoFile, lineFromFile)) {
+        if (lineFromFile == line) {
+            std::string toBeReplaced = "\"" + fieldType + "\" : \"" + value + "\",",
+            replacement = "\"" + fieldType + "\" : \"" + newValue + "\",";
+            //lineFromFile = lineFromFile.replace(line.find(toBeReplaced), replacement.size(), replacement);
+            lineFromFile = lineFromFile.substr(0, line.find(toBeReplaced)) + replacement + lineFromFile.substr(line.find(toBeReplaced) + toBeReplaced.size(), lineFromFile.size());
+        }
+        content += lineFromFile + "\n";
+    }
+
+    usersInfoFile.close();
+
+    std::ofstream usersInfoFileNew(usersInfoFilePath, std::ios::trunc);
+
+    usersInfoFileNew<<content;
+
+    usersInfoFileNew.close();
+
 }
 
 /**
@@ -133,17 +339,25 @@ std::string getPasswordByUsername (std::string username) {
  *
  */
 void saveNewUserInfo (Consumer newConsumer) {
-    std::ofstream usersInfoFile(usersInfoFilePath, std::ios::app);
+    std::ofstream usersInfoFile;
 
-    usersInfoFile<<"{\"username\" : \""<<newConsumer.username<<"\","<<
-    " \"typeAccount\" : \""<<newConsumer.typeAccount<<"\", "<<
-    " \"age\" : \""<<newConsumer.age<<"\", "<<
-    " \"gender\" : \""<<newConsumer.gender<<"\", "<<
-    " \"height\" : \""<<newConsumer.height<<"\", "<<
-    " \"weight\" : \""<<newConsumer.weight<<"\", "<<
-    " \"activityLevel\" : \""<<newConsumer.activityLevel<<"\", "<<
-    " \"dailyCalories\" : \""<<newConsumer.dailyCalories<<"\", "<<
-    " \"goal\" : \""<<newConsumer.goal<<"\"}\n";
+    if (getNumberOfConsumers() == 0) {
+        usersInfoFile.open(usersInfoFilePath, std::ios::trunc);
+    }
+    else {
+        usersInfoFile.open(usersInfoFilePath, std::ios::app);
+    }
+
+    usersInfoFile<<"{\"username\" : \""<<newConsumer.username<<"\", "<<
+    "\"typeAccount\" : \""<<newConsumer.typeAccount<<"\", "<<
+    "\"age\" : \""<<newConsumer.age<<"\", "<<
+    "\"gender\" : \""<<newConsumer.gender<<"\", "<<
+    "\"height\" : \""<<newConsumer.height<<"\", "<<
+    "\"weight\" : \""<<newConsumer.weight<<"\", "<<
+    "\"activityLevel\" : \""<<newConsumer.activityLevel<<"\", "<<
+    "\"dailyCalories\" : \""<<newConsumer.dailyCalories<<"\", "<<
+    "\"eatenCalories\" : \""<<newConsumer.eatenCalories<<"\", "<<
+    "\"goal\" : \""<<newConsumer.goal<<"\", }\n";
 
     usersInfoFile.close();
 }
@@ -155,7 +369,14 @@ void saveNewUserInfo (Consumer newConsumer) {
  *
  */
 void saveNewUser (Consumer newConsumer) {
-    std::ofstream usersFile(usersFilePath, std::ios::app);
+    std::ofstream usersFile;
+
+    if (getNumberOfConsumers() == 0) {
+        usersFile.open(usersFilePath, std::ios::trunc);
+    }
+    else {
+        usersFile.open(usersFilePath, std::ios::app);
+    }
 
     usersFile<<"{\"username\" : \""<<newConsumer.username<<"\", \"password\" : \""<<newConsumer.password<<"\"}\n";
     saveNewUserInfo(newConsumer);
@@ -220,17 +441,248 @@ std::string getLineInfoForUsername (std::string username) {
     return "not found";
 }
 
+int stringToInt(std::string stringValue) {
+    int intValue = 0, tenHandler = 1;
+
+    for (int i = 0; i < stringValue.size(); i++) {
+            tenHandler = 1;
+            for (int j = i + 1; j < stringValue.size(); j++) {
+                tenHandler *= 10;
+            }
+        intValue += (int) (stringValue[i] - '0') * tenHandler;
+    }
+
+    return intValue;
+}
+
+void home(Consumer consumer);
+
 /**
  * @type window
- * @brief Function for singing up a new consumer
+ * @brief Function for logging in an already existing consumer
  *
- * @param loggedConsumer
  */
-void home (Consumer consumer) {
-    system("cls");
+void logIn () {
+    std::string username, password;
 
-    std::cout<<"Hello, "<<consumer.username<<"!\nYour daily calories are "<<consumer.dailyCalories;
-    std::cin>>input;
+    std::cout<<"Enter username: ";
+    std::cin>>username;
+    while (getPasswordByUsername(username) == "") {
+        std::cout<<"Customer does not exist! Try again: ";
+        std::cin>>username;
+    }
+    std::cout<<"Enter password: ";
+    std::cin>>password;
+    while (password != getPasswordByUsername(username)) {
+        std::cout<<"Wrong password! Try again: ";
+        std::cin>>password;
+    }
+
+    std::string lineInfo = getLineInfoForUsername(username);
+    Consumer loggedInConsumer(getField(lineInfo, "typeAccount"),
+                     getField(lineInfo, "username"),
+                     getField(lineInfo, "password"),
+                     stringToInt(getField(lineInfo, "age")),
+                     getField(lineInfo, "gender"),
+                     stringToInt(getField(lineInfo, "height")),
+                     stringToInt(getField(lineInfo, "weight")),
+                     stringToInt(getField(lineInfo, "activityLevel")),
+                     getField(lineInfo, "goal"),
+                     stringToInt(getField(lineInfo, "dailyCalories")),
+                     stringToInt(getField(lineInfo, "eatenCalories")));
+    home(loggedInConsumer);
+}
+
+/**
+ * @type window
+ * @brief Function for saving new meal to file
+ *
+ * @param consumer
+ * @param date Today's data
+ * @param name
+ * @param calories
+ * @param type meal/training
+ *
+ */
+void saveMealOrTraining (Consumer consumer, std::string date, std::string name, int calories, std::string type) {
+    std::string lineFromFile, content = "", searchType = "eatenCalories";
+    std::ifstream mealInfo(mealInfoPath);
+
+    if (type == "training") {
+        searchType = "burntCalories";
+    }
+
+    while (std::getline(mealInfo, lineFromFile)) {
+        if (lineFromFile.find(consumer.username) != std::string::npos &&
+            lineFromFile.find(date) != std::string::npos &&
+            lineFromFile.find(searchType) != std::string::npos) {
+            lineFromFile = lineFromFile.substr(0, lineFromFile.size() - 1) + " \"" + name + "\" : \"" + std::to_string(calories) + "\",}";
+        }
+        content += lineFromFile + "\n";
+    }
+
+    mealInfo.close();
+
+
+    std::ofstream mealInfoNew(mealInfoPath, std::ios::trunc);
+
+    mealInfoNew<<content;
+
+    mealInfoNew.close();
+}
+
+/**
+ * @type window
+ * @brief Function for adding new meal
+ *
+ * @param consumer
+ *
+ */
+void addMeal (Consumer consumer) {
+    std::string name;
+    int calories;
+
+    std::cout<<"Enter name of the meal: ";
+    std::cin>>name;
+    std::cout<<"Enter calories of the meal: ";
+    std::cin>>calories;
+
+    consumer.eatenCalories += calories;
+    setField(getLineInfoForUsername(consumer.username), "eatenCalories", std::to_string(consumer.eatenCalories));
+    addRowsToMealInfo(consumer, "eatenCalories");
+    saveMealOrTraining(consumer, todaysDate(), name, calories, "meal");
+    home(consumer);
+}
+
+/**
+ * @type window
+ * @brief Function for adding new training
+ *
+ * @param consumer
+ *
+ */
+void addTraining (Consumer consumer) {
+    std::string name;
+    int calories;
+
+    std::cout<<"Enter name of the training: ";
+    std::cin>>name;
+    std::cout<<"Enter burnt calories from the training: ";
+    std::cin>>calories;
+
+    consumer.eatenCalories -= calories;
+    setField(getLineInfoForUsername(consumer.username), "eatenCalories", std::to_string(consumer.eatenCalories));
+    addRowsToMealInfo(consumer, "burntCalories");
+    saveMealOrTraining(consumer, todaysDate(), name, calories, "training");
+    home(consumer);
+}
+
+/**
+ * @type window
+ * @brief Function for updating age
+ *
+ * @param consumer
+ *
+ */
+void updateAge (Consumer consumer) {
+    int age;
+
+    std::cout<<"Old age: "<<consumer.age<<"\n\n";
+    std::cout<<"Enter new age: ";
+    std::cin>>age;
+    validateDataInt(0, 120, &age);
+
+    consumer.age = age;
+    setField(getLineInfoForUsername(consumer.username), "age", std::to_string(consumer.age));
+    consumer.setDailyCalories();
+    home(consumer);
+}
+
+/**
+ * @type window
+ * @brief Function for updating height
+ *
+ * @param consumer
+ *
+ */
+void updateHeight (Consumer consumer) {
+    int height;
+
+    std::cout<<"Old height: "<<consumer.height<<"\n\n";
+    std::cout<<"Enter new height: ";
+    std::cin>>height;
+    validateDataInt(0, 300, &height);
+
+    consumer.height = height;
+    setField(getLineInfoForUsername(consumer.username), "height", std::to_string(consumer.height));
+    consumer.setDailyCalories();
+    home(consumer);
+}
+
+/**
+ * @type window
+ * @brief Function for updating weight
+ *
+ * @param consumer
+ *
+ */
+void updateWeight (Consumer consumer) {
+    int weight;
+
+    std::cout<<"Old weight: "<<consumer.weight<<"\n\n";
+    std::cout<<"Enter new weight: ";
+    std::cin>>weight;
+    validateDataInt(0, 350, &weight);
+
+    consumer.weight = weight;
+    setField(getLineInfoForUsername(consumer.username), "weight", std::to_string(consumer.weight));
+    consumer.setDailyCalories();
+    home(consumer);
+}
+
+/**
+ * @type window
+ * @brief Function for updating activity level
+ *
+ * @param consumer
+ *
+ */
+void updateActivityLevel (Consumer consumer) {
+    int activityLevel;
+    std::cout<<"Old activity level: "<<consumer.activityLevel<<"\n\n";
+    std::cout<<"\n1 - Sedentary: little or no exercise"<<
+                   "\n2 - Light: exercise 1-3 times/week"<<
+                   "\n3 - Moderate: exercise 4-5 times/week"<<
+                   "\n4 - Active: daily exercise or intense exercise 3-4 times/week"<<
+                   "\n5 - Very Active: intense exercise 6-7 times/week"<<
+                   "\n\nEnter new activity level: ";
+    std::cin>>activityLevel;
+    validateDataInt(1, 5, &activityLevel);
+
+    consumer.activityLevel = activityLevel;
+    setField(getLineInfoForUsername(consumer.username), "activityLevel", std::to_string(consumer.activityLevel));
+    consumer.setDailyCalories();
+    home(consumer);
+}
+
+/**
+ * @type window
+ * @brief Function for changing goal
+ *
+ * @param consumer
+ *
+ */
+void changeGoal (Consumer consumer) {
+    std::string goal;
+    std::cout<<"Old goal: "<<consumer.goal<<"\n\n";
+    std::cout<<"\nd - calorie deficit\nm - maintenance\ns - calorie surplus\n\nEnter your goal: ";
+    std::cin>>goal;
+    validateDataString({"d", "m", "s"}, &goal);
+
+    consumer.goal = goal;
+    setField(getLineInfoForUsername(consumer.username), "goal", consumer.goal);
+    consumer.setDailyCalories();
+    home(consumer);
 }
 
 /**
@@ -290,52 +742,49 @@ void signUp () {
     home(consumer);
 }
 
-int stringToInt(std::string stringValue) {
-    int intValue = 0, tenHandler = 1;
-
-    for (int i = 0; i < stringValue.size(); i++) {
-            tenHandler = 1;
-            for (int j = i + 1; j < stringValue.size(); j++) {
-                tenHandler *= 10;
-            }
-        intValue += (int) (stringValue[i] - '0') * tenHandler;
-    }
-
-    return intValue;
-}
+void helloMenu();
 
 /**
- * @type window
- * @brief Function for logging in an already existing consumer
+ * @brief Function for displaying a menu of options
+ *
+ * @param option Description of the chosen option
  *
  */
-void logIn () {
-    std::string username, password;
+void manageOptions (std::string option, Consumer* consumer = nullptr) {
 
-    std::cout<<"Enter username: ";
-    std::cin>>username;
-    while (getPasswordByUsername(username) == "") {
-        std::cout<<"Customer does not exist! Try again: ";
-        std::cin>>username;
+    if (option == "Create new account") {
+        signUp();
     }
-    std::cout<<"Enter password: ";
-    std::cin>>password;
-    while (password != getPasswordByUsername(username)) {
-        std::cout<<"Wrong password! Try again: ";
-        std::cin>>password;
+    else if (option == "Log in to existing account") {
+        logIn();
     }
-
-    std::string lineInfo = getLineInfoForUsername(username);
-    Consumer loggedInConsumer(getField(lineInfo, "typeAccount"),
-                     getField(lineInfo, "username"),
-                     getField(lineInfo, "password"),
-                     stringToInt(getField(lineInfo, "age")),
-                     getField(lineInfo, "gender"),
-                     stringToInt(getField(lineInfo, "height")),
-                     stringToInt(getField(lineInfo, "weight")),
-                     stringToInt(getField(lineInfo, "activityLevel")),
-                     getField(lineInfo, "goal"));
-    home(loggedInConsumer);
+    else if (option == "Logout") {
+        helloMenu();
+    }
+    else if (option == "Add new meal") {
+        addMeal(*consumer);
+    }
+    else if (option == "Update age") {
+        updateAge(*consumer);
+    }
+    else if (option == "Update height") {
+        updateHeight(*consumer);
+    }
+    else if (option == "Update weight") {
+        updateWeight(*consumer);
+    }
+    else if (option == "Update activity level") {
+        updateActivityLevel(*consumer);
+    }
+    else if (option == "Change goal") {
+        changeGoal(*consumer);
+    }
+    else if (option == "Add new training") {
+        addTraining(*consumer);
+    }
+    else {
+        std::cout<<"in progress...";
+    }
 }
 
 /**
@@ -363,29 +812,10 @@ void chooseOption(int numberOfOptions) {
 /**
  * @brief Function for displaying a menu of options
  *
- * @param option Description of the chosen option
- *
- */
-void manageOptions (std::string option) {
-
-    if (option == "Create new account") {
-        signUp();
-    }
-    else if (option == "Log in to existing account") {
-        logIn();
-    }
-    else {
-        std::cout<<"in progress...";
-    }
-}
-
-/**
- * @brief Function for displaying a menu of options
- *
  * @param options List of options
  *
  */
-void displayOptions (std::vector<std::string> options) {
+void displayOptions (std::vector<std::string> options, Consumer* consumer = nullptr) {
 
     for (int i = 0; i < options.size(); i++) {
         std::cout<<"\t"<<i + 1<<" - "<<options[i]<<"\n";
@@ -394,7 +824,23 @@ void displayOptions (std::vector<std::string> options) {
     std::cout<<"\n";
 
     chooseOption(options.size());
-    manageOptions(options[input - 1]);
+    manageOptions(options[input - 1], consumer);
+}
+
+/**
+ * @type window
+ * @brief Function for singing up a new consumer
+ *
+ * @param loggedConsumer
+ */
+void home (Consumer consumer) {
+    system("cls");
+
+    std::cout<<"Hello, "<<consumer.username<<"!\nYour daily calories are "<<consumer.dailyCalories<<
+    "\nYour calorie intake for the day is "<<consumer.eatenCalories<<" calories!\n\n";
+    displayMealsAndTrainingsForToday(consumer);
+
+    displayOptions({"Add new meal", "Add new training", "Update age" , "Update height", "Update weight", "Update activity level", "Change goal", "Logout"}, &consumer);
 }
 
 /**
@@ -413,7 +859,7 @@ void helloMenu () {
 int main() {
     //std::cout<<getField("{\"username\" : \"antonio\", \"typeAccount\" : \"Standart\", \"age\" : \"19\", \"gender\" : \"male\", \"height\" : \"176\", \"weight\" : \"70\", \"activityLevel\" : \"4\", \"goal\" : \"s\"}", "gender");
 
-    std::cout<<stringToInt("19");
+    std::cout<<todaysDate();
     helloMenu();
 
     return 0;
