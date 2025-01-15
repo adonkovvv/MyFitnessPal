@@ -31,6 +31,7 @@ struct Consumer {
     int weight;
     int activityLevel;
     std::string goal;
+    int dailyCalories;
 
     Consumer (std::string typeAccount_val,
               std::string username_val,
@@ -49,7 +50,43 @@ struct Consumer {
         weight = weight_val;
         activityLevel = activityLevel_val;
         goal = goal_val;
+
+        setDailyCalories();
     }
+
+    void setDailyCalories () {
+        double bmr;
+        if (gender == "m") {
+                bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+        }
+        else {
+            bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+        }
+
+        switch (activityLevel) {
+            case 1: bmr *= 1.2;
+                break;
+            case 2: bmr *= 1.375;
+                break;
+            case 3: bmr *= 1.55;
+                break;
+            case 4: bmr *= 1.725;
+                break;
+            case 5: bmr *= 1.9;
+                break;
+        }
+
+        if (goal == "d") {
+            dailyCalories = bmr - 500;
+        }
+        else if (goal == "m") {
+            dailyCalories = bmr;
+        }
+        else {
+            dailyCalories = bmr + 500;
+        }
+    }
+
 };
 
 /**
@@ -105,7 +142,8 @@ void saveNewUserInfo (Consumer newConsumer) {
     " \"height\" : \""<<newConsumer.height<<"\", "<<
     " \"weight\" : \""<<newConsumer.weight<<"\", "<<
     " \"activityLevel\" : \""<<newConsumer.activityLevel<<"\", "<<
-    " \"goal\" : \""<<newConsumer.goal<<"\"}";
+    " \"dailyCalories\" : \""<<newConsumer.dailyCalories<<"\", "<<
+    " \"goal\" : \""<<newConsumer.goal<<"\"}\n";
 
     usersInfoFile.close();
 }
@@ -191,7 +229,7 @@ std::string getLineInfoForUsername (std::string username) {
 void home (Consumer consumer) {
     system("cls");
 
-    std::cout<<"Hello, "<<consumer.username<<"!";
+    std::cout<<"Hello, "<<consumer.username<<"!\nYour daily calories are "<<consumer.dailyCalories;
     std::cin>>input;
 }
 
@@ -249,6 +287,7 @@ void signUp () {
 
     Consumer consumer (typeAccount, username, password, age, gender, height, weight, activityLevel, goal);
     saveNewUser(consumer);
+    home(consumer);
 }
 
 int stringToInt(std::string stringValue) {
