@@ -30,6 +30,14 @@ void updateDailyCalories (Consumer consumer);
 std::string todaysDate ();
 std::string getLineInfoForUsername (std::string username);
 void setField (std::string line, std::string fieldType, std::string newValue);
+void showHistory (Consumer consumer);
+std::string getField (std::string line, std::string fieldType);
+void displayOptions (std::vector<std::string> options, Consumer* consumer);
+void deleteHistoryForDate (Consumer consumer);
+void home(Consumer consumer);
+std::string todaysDate ();
+int getNumberOfRowsWithMeals ();
+void helloMenu();
 
 struct Consumer {
     std::string typeAccount;
@@ -144,9 +152,6 @@ void updateDailyCalories (Consumer consumer) {
     mealInfoNew.close();
 }
 
-std::string todaysDate ();
-int getNumberOfRowsWithMeals ();
-
 bool isThereRowForConsumerAndTypeForToday(Consumer consumer, std::string type) {
     std::ifstream mealFile(mealInfoPath);
     std::string line;
@@ -191,18 +196,19 @@ void addRowsToMealInfo (Consumer consumer, std::string type) {
  * @brief Function for displaying meals and trainings info
  *
  * @param consumer
+ * @param date format d-m-y (31-1-2000)
  *
  */
-void displayMealsAndTrainingsForToday (Consumer consumer) {
+void displayMealsAndTrainingsForDate (Consumer consumer, std::string date = todaysDate()) {
     std::string lineFromFile, searchType = "eatenCalories";
     std::ifstream mealInfo(mealInfoPath);
 
     while (std::getline(mealInfo, lineFromFile)) {
         if (lineFromFile.find(consumer.username) != std::string::npos &&
-            lineFromFile.find(todaysDate()) != std::string::npos &&
+            getField(lineFromFile, "date") == date &&
             lineFromFile.find("eatenCalories") != std::string::npos) {
-            std::cout<<"The meals with their calories you have consumed for the day are:\n\n";
-            std::string mealsLine = lineFromFile.substr(lineFromFile.find(todaysDate()) + todaysDate().size() + 3, lineFromFile.size());
+            std::cout<<"The meals with their calories you have consumed are:\n\n";
+            std::string mealsLine = lineFromFile.substr(lineFromFile.find(date) + date.size() + 3, lineFromFile.size());
 
             //"tutka" : "50", "sandvich" : "600", "d" : "4", "r" : "4", "mohito" : "120",}
             for (int i = 0; i < mealsLine.size(); i++) {
@@ -226,10 +232,10 @@ void displayMealsAndTrainingsForToday (Consumer consumer) {
         }
 
         if (lineFromFile.find(consumer.username) != std::string::npos &&
-            lineFromFile.find(todaysDate()) != std::string::npos &&
+            lineFromFile.find(date) != std::string::npos &&
             lineFromFile.find("burntCalories") != std::string::npos) {
-            std::cout<<"The trainings with their calories you have done for the day are:\n\n";
-            std::string mealsLine = lineFromFile.substr(lineFromFile.find(todaysDate()) + todaysDate().size() + 3, lineFromFile.size());
+            std::cout<<"The trainings with their calories you have done are:\n\n";
+            std::string mealsLine = lineFromFile.substr(lineFromFile.find(date) + date.size() + 3, lineFromFile.size());
 
             //"tutka" : "50", "sandvich" : "600", "d" : "4", "r" : "4", "mohito" : "120",}
             for (int i = 0; i < mealsLine.size(); i++) {
@@ -313,7 +319,7 @@ int getNumberOfRowsWithMeals () {
  *
  */
 std::string getField (std::string line, std::string fieldType) {
-    std::string fromTheFieldType = line.substr(line.find(fieldType) + fieldType.size() + 5);
+    std::string fromTheFieldType = line.substr(line.find("\"" + fieldType + "\"") + fieldType.size() + 6);
     return fromTheFieldType.substr(0, fromTheFieldType.find_first_of("\""));
 }
 
@@ -348,6 +354,43 @@ void setField (std::string line, std::string fieldType, std::string newValue) {
     usersInfoFileNew<<content;
 
     usersInfoFileNew.close();
+
+}
+
+/**
+ * @brief Function for setting value of field
+ *
+ * @param line Line with data (usersInfo.txt format)
+ * @param fieldType the name of the fields
+ * @param newValue Data to be saved
+ *
+ */
+std::string setFieldForMealInfo (std::string line, std::string fieldType, std::string newValue) {
+    std::string lineFromFile, content = "", returnLine = "";
+
+    std::ifstream mealInfoFile(mealInfoPath);
+
+
+    while (std::getline(mealInfoFile, lineFromFile)) {
+        if (lineFromFile == line) {
+            std::string toBeReplaced = fieldType,
+            replacement = newValue;
+            //lineFromFile = lineFromFile.replace(line.find(toBeReplaced), replacement.size(), replacement);
+            lineFromFile = lineFromFile.substr(0, line.find(toBeReplaced)) + replacement + lineFromFile.substr(line.find(toBeReplaced) + toBeReplaced.size(), lineFromFile.size());
+            returnLine = lineFromFile;
+        }
+        content += lineFromFile + "\n";
+    }
+
+    mealInfoFile.close();
+
+    std::ofstream mealInfoFileNew(mealInfoPath, std::ios::trunc);
+
+    mealInfoFileNew<<content;
+
+    mealInfoFileNew.close();
+
+    return returnLine;
 
 }
 
@@ -399,7 +442,6 @@ void saveNewUserInfo (Consumer newConsumer) {
     "\"weight\" : \""<<newConsumer.weight<<"\", "<<
     "\"activityLevel\" : \""<<newConsumer.activityLevel<<"\", "<<
     "\"dailyCalories\" : \""<<newConsumer.dailyCalories<<"\", "<<
-    "\"eatenCalories\" : \""<<newConsumer.eatenCalories<<"\", "<<
     "\"goal\" : \""<<newConsumer.goal<<"\", }\n";
 
     usersInfoFile.close();
@@ -444,7 +486,7 @@ bool validateDataString (std::vector<std::string> possibilities, std::string* da
 
     std::cout<<"Invalid option! Please enter valid option from the list: ";
     std::cin>>*dataString;
-    validateDataString(possibilities, dataString);
+    return validateDataString(possibilities, dataString);
 }
 
 /**
@@ -462,7 +504,7 @@ bool validateDataInt (int min_val, int max_val, int* dataInt) {
 
     std::cout<<"Invalid option! Please enter valid option in a acceptable range: ";
     std::cin>>*dataInt;
-    validateDataInt(min_val, max_val, dataInt);
+    return validateDataInt(min_val, max_val, dataInt);
 }
 
 /**
@@ -477,10 +519,38 @@ std::string getLineInfoForUsername (std::string username) {
 
     while (std::getline(usersInfoFile, line)) {
         if (getField(line, "username") == username) {
+                usersInfoFile.close();
                 return line;
         }
     }
 
+    usersInfoFile.close();
+    return "not found";
+}
+
+/**
+ * @brief Function for getting line with meal info for username and date
+ *
+ * @param username Username of consumer
+ * @param date Format (17-1-2025)
+ * @param type eatenCalories/burntCalories
+ *
+ */
+std::string getLineMealInfo (std::string username, std::string date, std::string type) {
+    std::ifstream usersMealInfoFile(mealInfoPath);
+    std::string line;
+
+    while (std::getline(usersMealInfoFile, line)) {
+        if (getField(line, "username") == username &&
+            getField(line, "date") == date &&
+            getField(line, "type") == type) {
+                usersMealInfoFile.close();
+                return line;
+        }
+    }
+
+
+    usersMealInfoFile.close();
     return "not found";
 }
 
@@ -497,8 +567,6 @@ int stringToInt(std::string stringValue) {
 
     return intValue;
 }
-
-void home(Consumer consumer);
 
 /**
  * @type window
@@ -522,6 +590,12 @@ void logIn () {
     }
 
     std::string lineInfo = getLineInfoForUsername(username);
+    int eatenCalories = 0, burntCalories = 0;
+    if (getLineMealInfo(username, todaysDate(), "eatenCalories") != "not found") {
+        eatenCalories = stringToInt(getField(getLineMealInfo(username, todaysDate(), "eatenCalories"), "caloriesSum"));
+        burntCalories = stringToInt(getField(getLineMealInfo(username, todaysDate(), "burntCalories"), "caloriesSum"));
+    }
+
     Consumer loggedInConsumer(getField(lineInfo, "typeAccount"),
                      getField(lineInfo, "username"),
                      getField(lineInfo, "password"),
@@ -532,7 +606,8 @@ void logIn () {
                      stringToInt(getField(lineInfo, "activityLevel")),
                      getField(lineInfo, "goal"),
                      stringToInt(getField(lineInfo, "dailyCalories")),
-                     stringToInt(getField(lineInfo, "eatenCalories")));
+                     eatenCalories,
+                     burntCalories);
     home(loggedInConsumer);
 }
 
@@ -595,7 +670,6 @@ void addMeal (Consumer consumer) {
 
     int old = consumer.eatenCalories;
     consumer.eatenCalories += calories;
-    setField(getLineInfoForUsername(consumer.username), "eatenCalories", std::to_string(consumer.eatenCalories));
     addRowsToMealInfo(consumer, "eatenCalories");
     saveMealOrTraining(consumer, todaysDate(), name, calories, "meal", old);
     home(consumer);
@@ -619,7 +693,6 @@ void addTraining (Consumer consumer) {
 
     int old = consumer.burntCalories;
     consumer.burntCalories += calories;
-    setField(getLineInfoForUsername(consumer.username), "eatenCalories", std::to_string(consumer.eatenCalories));
     addRowsToMealInfo(consumer, "burntCalories");
     saveMealOrTraining(consumer, todaysDate(), name, calories, "training", old);
     home(consumer);
@@ -790,7 +863,113 @@ void signUp () {
     home(consumer);
 }
 
-void helloMenu();
+/**
+ * @brief Function for displaying macros for premium
+ *
+ * @param consumer
+ *
+ */
+void displayMacrosForPremium (Consumer consumer) {
+    if(consumer.typeAccount == "p") {
+        int p, c, f;
+        if (consumer.goal == "d") {
+            p = consumer.dailyCalories * 0.35;
+            c = consumer.dailyCalories * 0.35;
+            f = consumer.dailyCalories * 0.30;
+        }
+        else if (consumer.goal == "d") {
+            p = consumer.dailyCalories * 0.25;
+            c = consumer.dailyCalories * 0.45;
+            f = consumer.dailyCalories * 0.30;
+        }
+        else {
+            p = consumer.dailyCalories * 0.40;
+            c = consumer.dailyCalories * 0.35;
+            f = consumer.dailyCalories * 0.25;
+        }
+        std::cout<<"\nof which the macronutrients are preffered to be:"<<
+        "\n\n\tprotein: " + std::to_string(p) + " calories - " + std::to_string(p / 4) + " grams" +
+        "\n\tcarbohydrates: " + std::to_string(c) + " calories - " + std::to_string(c / 4) + " grams" +
+        "\n\tfats: " + std::to_string(f) + " calories - " + std::to_string(f / 9) + " grams\n";
+    }
+}
+
+/**
+ * @brief Function for editing meals and trainings for today
+ *
+ * @param consumer
+ * @param type meal\training
+ *
+ */
+void editMealTraining (Consumer consumer, std::string type) {
+    std::string lineFromFile, newName, newCalories;
+    std::ifstream mealInfo(mealInfoPath);
+    std::cout<<"Choose which "<<type<<" would you like to edit\n\n";
+    std::vector<std::string> products;
+
+    type = (type == "meal") ? "eatenCalories" : "burntCalories";
+
+    while (std::getline(mealInfo, lineFromFile)) {
+        if (lineFromFile.find(consumer.username) != std::string::npos &&
+            getField(lineFromFile, "date") == todaysDate() &&
+            lineFromFile.find(type) != std::string::npos) {
+            std::string thingsLine = lineFromFile.substr(lineFromFile.find(todaysDate()) + todaysDate().size() + 3, lineFromFile.size());
+
+            for (int i = 0; i < thingsLine.size(); i++) {
+                if (thingsLine[i] == '"') {
+                    i++;
+                    std::string thing = "", calories = "";
+                    while (thingsLine[i] != '"') {
+                        thing += thingsLine[i];
+                        i++;
+                    }
+                    i += 5;
+                    while (thingsLine[i] != '"') {
+                        calories += thingsLine[i];
+                        i++;
+                    }
+                    i += 2;
+                    products.push_back(thing + " - " + calories);
+                }
+            }
+            break;
+        }
+    }
+
+    for(int i = 0; i < products.size(); i++) {
+        std::cout<<"\t"<<i+1<<". "<<products[i]<<"\n";
+    }
+
+    std::cout<<"Your choice: ";
+    std::cin>>input;
+    std::string oldName = products[input - 1].substr(0, products[input - 1].find(" - ")),
+    oldCalories = products[input - 1].substr(products[input - 1].find(" - ") + 3, products[input - 1].size()),
+    oldCaloriesSaved = getField(lineFromFile, "caloriesSum");
+
+    std::cout<<"Enter new name: ";
+    std::cin>>newName;
+    std::cout<<"Enter new calories: ";
+    std::cin>>newCalories;
+    int caloriesToBeSaved = stringToInt(getField(lineFromFile, "caloriesSum")) + stringToInt(newCalories) - stringToInt(oldCalories);
+
+
+    lineFromFile = setFieldForMealInfo(lineFromFile, "\"" + oldName + "\" : \"" + oldCalories + "\"", "\"" + newName + "\" : \"" + newCalories + "\"");
+    setFieldForMealInfo(lineFromFile, "\"caloriesSum\" : \"" + oldCaloriesSaved, "\"caloriesSum\" : \"" +
+                        std::to_string(caloriesToBeSaved));
+
+    while (std::getline(mealInfo, lineFromFile)) {
+        if (lineFromFile.find(consumer.username) != std::string::npos &&
+            getField(lineFromFile, "date") == todaysDate() &&
+            lineFromFile.find(type) != std::string::npos) {
+
+        }
+    }
+
+    (type == "eatenCalories") ? consumer.eatenCalories = caloriesToBeSaved : consumer.burntCalories = caloriesToBeSaved;
+
+    mealInfo.close();
+    home(consumer);
+}
 
 /**
  * @brief Function for displaying a menu of options
@@ -831,14 +1010,104 @@ void manageOptions (std::string option, Consumer* consumer = nullptr) {
         addTraining(*consumer);
     }
     else if (option == "Show history for date") {
-        //showHistory(*consumer);
+        showHistory(*consumer);
+    }
+    else if (option == "Go back to main menu") {
+        home(*consumer);
+    }
+    else if (option == "Delete history for date") {
+        deleteHistoryForDate(*consumer);
+    }
+    else if (option == "Edit meal for today") {
+        editMealTraining(*consumer, "meal");
+    }
+    else if (option == "Edit training for today") {
+        editMealTraining(*consumer, "training");
     }
     else {
-        std::cout<<"in progress...";
+        std::cout<<"Error: There is no such an option! Please contact administrator!";
     }
 }
 
-//void showHistory (Consumer consumer) {
+/**
+ * @brief Function showing history for a certain date
+ *
+ * @param consumer
+ *
+ */
+void showHistory (Consumer consumer) {
+    std::string date;
+
+    std::cout<<"Enter date for showing the history\nformat: d-m-y (example: 31-1-2000): ";
+    std::cin>>date;
+
+    std::string lineEaten = getLineMealInfo(consumer.username, date, "eatenCalories");
+    std::string lineBurnt = getLineMealInfo(consumer.username, date, "burntCalories"), dailyCal, balanceCal;
+
+    if (lineEaten == "not found" && lineBurnt != "not found") {
+        dailyCal = getField(lineBurnt, "dailyCalories");
+        balanceCal = "-" + getField(lineBurnt, "caloriesSum");
+    }
+    else if (lineEaten != "not found" && lineBurnt == "not found") {
+        dailyCal = getField(lineEaten, "dailyCalories");
+        balanceCal = getField(lineEaten, "caloriesSum");
+    }
+    else if (lineEaten == "not found" && lineBurnt == "not found") {
+        std::cout<<"There is no information for the date entered!\n";
+        displayOptions({"Show history for date", "Go back to main menu"}, &consumer);
+    }
+    else {
+        dailyCal = getField(lineBurnt, "dailyCalories");
+        balanceCal = std::to_string(stringToInt(getField(lineEaten, "caloriesSum")) - stringToInt(getField(lineBurnt, "caloriesSum")));
+        std::cout<<"Your daily calories for the day were "<<dailyCal<<"\nThe calorie intake for the day was "<<balanceCal<<"\n";
+        displayMealsAndTrainingsForDate(consumer, date);
+    }
+
+    displayOptions({"Go back to main menu"}, &consumer);
+}
+
+/**
+ * @brief Function for deleting history for a certain date
+ *
+ * @param consumer
+ * @param date
+ *
+ */
+void deleteHistoryForDate (Consumer consumer) {
+    std::string date, content = "", lineFromFile;
+    int br = 0;
+
+    std::cout<<"Enter date for deleting the history for\nformat: d-m-y (example: 31-1-2000): ";
+    std::cin>>date;
+
+    std::ifstream mealInfoFile(mealInfoPath);
+
+    while (std::getline(mealInfoFile, lineFromFile)) {
+        if (lineFromFile.find(consumer.username) != std::string::npos &&
+            lineFromFile.find("\"" + date + "\"") != std::string::npos) {
+                br++;
+            continue;
+        }
+        content += lineFromFile + "\n";
+    }
+
+    mealInfoFile.close();
+
+    std::ofstream mealInfoNew(mealInfoPath, std::ios::trunc);
+
+    mealInfoNew<<content;
+
+    mealInfoNew.close();
+
+    if (date == todaysDate()) {
+        consumer.eatenCalories = 0;
+        consumer.burntCalories = 0;
+    }
+
+    (br > 0) ? std::cout<<"All the history for "<<date<<" is deleted!\n\n" : std::cout<<"There were not found any history data for that date!\n\n";
+    displayOptions({"Go back to main menu"}, &consumer);
+}
+
 /**
  * @brief Function for reading an option, chosen from the consumer
  * and validating it, based on the number of possibly chosen
@@ -888,11 +1157,15 @@ void displayOptions (std::vector<std::string> options, Consumer* consumer = null
 void home (Consumer consumer) {
     system("cls");
 
-    std::cout<<"Hello, "<<consumer.username<<"!\nYour daily calories are "<<consumer.dailyCalories<<
-    "\nYour calorie intake for the day is "<<consumer.eatenCalories - consumer.burntCalories<<" calories!\n\n";
-    displayMealsAndTrainingsForToday(consumer);
+    std::cout<<"Hello, "<<consumer.username<<"!\nYour daily calories are "<<consumer.dailyCalories;
+    displayMacrosForPremium(consumer);
+    std::cout<<"\nYour calorie intake for the day is "<<consumer.eatenCalories - consumer.burntCalories<<" calories!\n\n";
+    displayMealsAndTrainingsForDate(consumer);
 
-    displayOptions({"Add new meal", "Add new training", "Show history for date", "Update age" , "Update height", "Update weight", "Update activity level", "Change goal", "Logout"}, &consumer);
+    displayOptions({"Add new meal", "Edit meal for today", "Add new training",
+                   "Edit training for today", "Show history for date", "Delete history for date",
+                   "Update age" , "Update height", "Update weight", "Update activity level",
+                   "Change goal", "Logout"}, &consumer);
 }
 
 /**
@@ -911,7 +1184,7 @@ void helloMenu () {
 int main() {
     //std::cout<<getField("{\"username\" : \"antonio\", \"typeAccount\" : \"Standart\", \"age\" : \"19\", \"gender\" : \"male\", \"height\" : \"176\", \"weight\" : \"70\", \"activityLevel\" : \"4\", \"goal\" : \"s\"}", "gender");
 
-    std::cout<<todaysDate();
+    //std::cout<<getField("\"a\" : \"130\"", "a");
     helloMenu();
 
     return 0;
