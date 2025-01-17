@@ -1,0 +1,3 @@
+{"username" : "antonio", "type" : "eatenCalories", "dailyCalories" : "3557", "caloriesSum" : "180", "date" : "17-1-2025", "banan" : "90", "hlqb" : "90", }
+{"username" : "antonio", "type" : "burntCalories", "dailyCalories" : "3557", "caloriesSum" : "20", "date" : "17-1-2025", "fitness" : "20", }
+{"username" : "antonio_second", "type" : "eatenCalories", "dailyCalories" : "3557", "caloriesSum" : "40", "date" : "17-1-2025", "qbulka" : "40", }
