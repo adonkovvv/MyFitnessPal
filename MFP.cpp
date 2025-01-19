@@ -210,7 +210,6 @@ void displayMealsAndTrainingsForDate (Consumer consumer, std::string date = toda
             std::cout<<"The meals with their calories you have consumed are:\n\n";
             std::string mealsLine = lineFromFile.substr(lineFromFile.find(date) + date.size() + 3, lineFromFile.size());
 
-            //"tutka" : "50", "sandvich" : "600", "d" : "4", "r" : "4", "mohito" : "120",}
             for (int i = 0; i < mealsLine.size(); i++) {
                 if (mealsLine[i] == '"') {
                     i++;
@@ -237,7 +236,6 @@ void displayMealsAndTrainingsForDate (Consumer consumer, std::string date = toda
             std::cout<<"The trainings with their calories you have done are:\n\n";
             std::string mealsLine = lineFromFile.substr(lineFromFile.find(date) + date.size() + 3, lineFromFile.size());
 
-            //"tutka" : "50", "sandvich" : "600", "d" : "4", "r" : "4", "mohito" : "120",}
             for (int i = 0; i < mealsLine.size(); i++) {
                 if (mealsLine[i] == '"') {
                     i++;
@@ -341,7 +339,6 @@ void setField (std::string line, std::string fieldType, std::string newValue) {
         if (lineFromFile == line) {
             std::string toBeReplaced = "\"" + fieldType + "\" : \"" + value + "\",",
             replacement = "\"" + fieldType + "\" : \"" + newValue + "\",";
-            //lineFromFile = lineFromFile.replace(line.find(toBeReplaced), replacement.size(), replacement);
             lineFromFile = lineFromFile.substr(0, line.find(toBeReplaced)) + replacement + lineFromFile.substr(line.find(toBeReplaced) + toBeReplaced.size(), lineFromFile.size());
         }
         content += lineFromFile + "\n";
@@ -375,7 +372,6 @@ std::string setFieldForMealInfo (std::string line, std::string fieldType, std::s
         if (lineFromFile == line) {
             std::string toBeReplaced = fieldType,
             replacement = newValue;
-            //lineFromFile = lineFromFile.replace(line.find(toBeReplaced), replacement.size(), replacement);
             lineFromFile = lineFromFile.substr(0, line.find(toBeReplaced)) + replacement + lineFromFile.substr(line.find(toBeReplaced) + toBeReplaced.size(), lineFromFile.size());
             returnLine = lineFromFile;
         }
@@ -825,7 +821,6 @@ void signUp () {
     validateDataString({"s", "p"}, &typeAccount);
     std::cout<<"Choose username: ";
     std::cin>>username;
-    //TO DO - check if its unique
     while (getPasswordByUsername(username) != "") {
         std::cout<<"User with the same name already exists! Try with another one: ";
         std::cin>>username;
@@ -1128,7 +1123,6 @@ void chooseOption(int numberOfOptions) {
         std::cin>>input;
     }
 
-    //std::cout<<"\n";
     system("cls");
 }
 
@@ -1184,9 +1178,7 @@ void helloMenu () {
 
 
 int main() {
-    //std::cout<<getField("{\"username\" : \"antonio\", \"typeAccount\" : \"Standart\", \"age\" : \"19\", \"gender\" : \"male\", \"height\" : \"176\", \"weight\" : \"70\", \"activityLevel\" : \"4\", \"goal\" : \"s\"}", "gender");
 
-    //std::cout<<getField("\"a\" : \"130\"", "a");
     helloMenu();
 
     return 0;
