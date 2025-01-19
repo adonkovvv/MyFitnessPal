@@ -1,3 +1,4 @@
-{"username" : "antonio", "type" : "eatenCalories", "dailyCalories" : "3557", "caloriesSum" : "180", "date" : "17-1-2025", "banan" : "90", "hlqb" : "90", }
-{"username" : "antonio", "type" : "burntCalories", "dailyCalories" : "3557", "caloriesSum" : "20", "date" : "17-1-2025", "fitness" : "20", }
-{"username" : "antonio_second", "type" : "eatenCalories", "dailyCalories" : "3557", "caloriesSum" : "40", "date" : "17-1-2025", "qbulka" : "40", }
+{"username" : "antonio", "type" : "eatenCalories", "dailyCalories" : "3057", "caloriesSum" : "1230", "date" : "19-1-2025", "zakuska" : "950", "cheese" : "50", "snack" : "230", }
+{"username" : "antonio", "type" : "burntCalories", "dailyCalories" : "3057", "caloriesSum" : "650", "date" : "19-1-2025", "fitness" : "650", }
+{"username" : "petar", "type" : "eatenCalories", "dailyCalories" : "2170", "caloriesSum" : "870", "date" : "19-1-2025", "vodka" : "350", "lukanka" : "400", "salata" : "120", }
+{"username" : "petar", "type" : "burntCalories", "dailyCalories" : "2170", "caloriesSum" : "150", "date" : "19-1-2025", "kopane_v_dvora" : "150", }
