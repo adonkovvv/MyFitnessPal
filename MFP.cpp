@@ -518,7 +518,8 @@ std::string getLineInfoForUsername (std::string username) {
     std::string line;
 
     while (std::getline(usersInfoFile, line)) {
-        if (getField(line, "username") == username) {
+        if (line != "" &&
+            getField(line, "username") == username) {
                 usersInfoFile.close();
                 return line;
         }
@@ -541,7 +542,8 @@ std::string getLineMealInfo (std::string username, std::string date, std::string
     std::string line;
 
     while (std::getline(usersMealInfoFile, line)) {
-        if (getField(line, "username") == username &&
+        if (line != "" &&
+            getField(line, "username") == username &&
             getField(line, "date") == date &&
             getField(line, "type") == type) {
                 usersMealInfoFile.close();
@@ -770,12 +772,12 @@ void updateWeight (Consumer consumer) {
  */
 void updateActivityLevel (Consumer consumer) {
     int activityLevel;
-    std::cout<<"Old activity level: "<<consumer.activityLevel<<"\n\n";
-    std::cout<<"\n1 - Sedentary: little or no exercise"<<
-                   "\n2 - Light: exercise 1-3 times/week"<<
-                   "\n3 - Moderate: exercise 4-5 times/week"<<
-                   "\n4 - Active: daily exercise or intense exercise 3-4 times/week"<<
-                   "\n5 - Very Active: intense exercise 6-7 times/week"<<
+    std::cout<<"Old activity level: "<<consumer.activityLevel<<"\n";
+    std::cout<<"\n\t1 - Sedentary: little or no exercise"<<
+                   "\n\t2 - Light: exercise 1-3 times/week"<<
+                   "\n\t3 - Moderate: exercise 4-5 times/week"<<
+                   "\n\t4 - Active: daily exercise or intense exercise 3-4 times/week"<<
+                   "\n\t5 - Very Active: intense exercise 6-7 times/week"<<
                    "\n\nEnter new activity level: ";
     std::cin>>activityLevel;
     validateDataInt(1, 5, &activityLevel);
@@ -795,8 +797,8 @@ void updateActivityLevel (Consumer consumer) {
  */
 void changeGoal (Consumer consumer) {
     std::string goal;
-    std::cout<<"Old goal: "<<consumer.goal<<"\n\n";
-    std::cout<<"\nd - calorie deficit\nm - maintenance\ns - calorie surplus\n\nEnter your goal: ";
+    std::cout<<"Old goal: "<<consumer.goal<<"\n";
+    std::cout<<"\n\td - calorie deficit\n\tm - maintenance\n\ts - calorie surplus\n\nEnter your goal: ";
     std::cin>>goal;
     validateDataString({"d", "m", "s"}, &goal);
 
@@ -1104,8 +1106,8 @@ void deleteHistoryForDate (Consumer consumer) {
         consumer.burntCalories = 0;
     }
 
-    (br > 0) ? std::cout<<"All the history for "<<date<<" is deleted!\n\n" : std::cout<<"There were not found any history data for that date!\n\n";
-    displayOptions({"Go back to main menu"}, &consumer);
+    (br > 0) ? std::cout<<"All the history for "<<date<<" is deleted!\n\n" : std::cout<<"There is no history found for that date!\n\n";
+    displayOptions({"Delete history for date", "Go back to main menu"}, &consumer);
 }
 
 /**
