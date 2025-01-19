@@ -1,3 +1,2 @@
 {"username" : "antonio", "typeAccount" : "s", "age" : "19", "gender" : "m", "height" : "178", "weight" : "70", "activityLevel" : "4", "dailyCalories" : "3557", "goal" : "s", }
-{"username" : "lorena", "typeAccount" : "p", "age" : "17", "gender" : "f", "height" : "165", "weight" : "58", "activityLevel" : "3", "dailyCalories" : "2203", "goal" : "m", }
 {"username" : "antonio_second", "typeAccount" : "p", "age" : "19", "gender" : "m", "height" : "178", "weight" : "70", "activityLevel" : "4", "dailyCalories" : "3557", "goal" : "s", }
